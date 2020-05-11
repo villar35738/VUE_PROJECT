@@ -1,36 +1,30 @@
 <template>
   <div>
-    <Titulo texto="Aluno" />
-    <div>
-      <input
-        type="text"
-        placeholder="Nome do Auno"
-        v-model="nome"
-        @keyup.enter="addAluno()"
-      />
-
+    <titulo :texto="professorid != undefined ? 'Professor: ' + professor.nome : 'Todos os Alunos'"
+    btnVoltar="true"/>
+    <div v-if="professorid != undefined">
+      <input type="text" placeholder="Nome do Aluno" v-model="nome" @keyup.enter="addAluno()">
       <button class="btn btnInput" @click="addAluno()">Adicionar</button>
     </div>
 
     <table>
       <thead>
-        <th>Matricula</th>
+        <th>Mat.</th>
         <th>Nome</th>
         <th>Opções</th>
       </thead>
       <tbody v-if="alunos.length">
         <tr v-for="(aluno, index) in alunos" :key="index">
-          <td>{{ aluno.id }}</td>
-          <!-- <td>{{aluno.id}}</td> -->
-          <td>{{ aluno.nome }} {{ aluno.sobrenome }}</td>
-          <td>
-            <button class="btn" @click="removerAluno(aluno)">Remover</button>
+          <td class="colPequeno">{{aluno.id}}</td>
+          <router-link :to="`/alunoDetalhe/${aluno.id}`" tag="td" style="cursor: pointer">
+            {{aluno.nome}} {{aluno.sobrenome}}
+          </router-link>
+          <td class="colPequeno">
+            <Button class="btn btn_Danger" @click="remover(aluno)">Remover</Button>
           </td>
         </tr>
       </tbody>
-      <tfoot v-else>
-        Nenhum aluno encontrado
-      </tfoot>
+      <tfoot v-else>Nenhum Aluno Encontrado</tfoot>
     </table>
   </div>
 </template>
@@ -44,23 +38,37 @@ export default {
   },
   data() {
     return {
-      titulo: "Alunos",
+      titulo: "Aluno",
+      professorid: this.$route.params.prof_id,
+      professor: {},
       nome: "",
       alunos: []
     };
   },
   created() {
-    this.$http
-      .get("http://localhost:3000/alunos")
-      .then(res => res.json())
-      .then(alunos => (this.alunos = alunos));
+    if (this.professorid) {
+      this.carregarProfessores();
+      this.$http
+        .get("http://localhost:3000/alunos?professor.id=" + this.professorid)
+        .then(res => res.json())
+        .then(alunos => (this.alunos = alunos));
+    } else {
+      this.$http
+        .get("http://localhost:3000/alunos")
+        .then(res => res.json())
+        .then(alunos => (this.alunos = alunos));
+    }
   },
   props: {},
   methods: {
     addAluno() {
       let _aluno = {
         nome: this.nome,
-        sobrenome: ""
+        sobrenome: "",
+        professor: {
+          id: this.professor.id,
+          nome: this.professor.nome
+        }
       };
 
       this.$http
@@ -71,19 +79,27 @@ export default {
           this.nome = "";
         });
     },
-    removerAluno(aluno) {
+    remover(aluno) {
       this.$http.delete(`http://localhost:3000/alunos/${aluno.id}`).then(() => {
         let indice = this.alunos.indexOf(aluno);
         this.alunos.splice(indice, 1);
       });
+    },
+    carregarProfessores() {
+      this.$http
+        .get("http://localhost:3000/professores/" + this.professorid)
+        .then(res => res.json())
+        .then(professor => {
+          this.professor = professor          
+        });
     }
   }
 };
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
 input {
+  width: calc(100% - 195px);
   border: 0;
   padding: 20px;
   font-size: 1.3em;
@@ -91,14 +107,15 @@ input {
   display: inline;
 }
 .btnInput {
+  width: 150px;
   border: 0px;
   padding: 20px;
   font-size: 1.3em;
-  background-color: rgb(116, 115, 115);
   display: inline;
+  background-color: rgb(116, 115, 115);
 }
 .btnInput:hover {
-  padding: 20px;
+  padding: 20x;
   margin: 0px;
   border: 0px;
 }
