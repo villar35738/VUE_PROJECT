@@ -12,6 +12,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using ProjectSchool_API.Data;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 namespace ProjectSchool_API
 {
@@ -31,7 +32,15 @@ namespace ProjectSchool_API
                 x => x.UseSqlite(Configuration.GetConnectionString("DefaultConnection"))
             );
 
-            services.AddControllers();
+            // services.AddControllers();
+
+            services.AddMvc()
+            .SetCompatibilityVersion(CompatibilityVersion.Version_3_0)
+                .AddNewtonsoftJson(options =>
+                options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+            );
+
+            services.AddScoped<IRepository, Repository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
